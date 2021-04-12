@@ -55,7 +55,8 @@ class Follow(models.Model):
 
 class Group(models.Model):
     """ описание сообщества """
-    title = models.CharField("Название сообщества", max_length=200)
+    title = models.CharField("Название сообщества", max_length=200,
+                             unique=True)
 
 
     def __str__(self):

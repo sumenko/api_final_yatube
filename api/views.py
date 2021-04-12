@@ -1,19 +1,20 @@
 # TODO:  Напишите свой вариант
 from typing import List
 from django.shortcuts import get_object_or_404, get_list_or_404
+from django.contrib.auth import get_user_model
 from rest_framework.response import Response
 from rest_framework import status
 
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-from .models import Post, Group
-from .serializers import GroupSerializer, PostSerializer, CommentSerializer
+from .models import Post, Group, Follow
+from .serializers import GroupSerializer, PostSerializer, CommentSerializer, FollowSerializer
 from .permissions import IsOwnerOrReadOnly
 
+User = get_user_model()
 
 class PostViewSet(ModelViewSet):
-    # queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
 
@@ -49,3 +50,28 @@ class GroupViewSet(ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
+
+
+class FollowViewSet(ModelViewSet):
+    serializer_class = FollowSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def perform_create(self, serializer):
+    
+        # user_id = self.request.user
+        user_id = self.request.POST.get('user')
+        following_id = self.request.POST.get('following')
+        # print(user_id, following_id)
+        user = User.objects.filter(pk=user_id)
+        following = User.objects.filter(pk=following_id)
+        serializer.save(user=user, following=following)
+        # Follow.objects.create(user=user_id, following=following_id)
+        return super().perform_create(serializer)
+    
+    def get_queryset(self):
+        user = self.request.user
+        queryset = user.following.all()
+        # user_id = self.request.parser_context['kwargs'].get('post_id')
+        # following_id = self.request.parser_context['kwargs'].get('post_id')
+        return queryset
+        # return super().get_queryset()
