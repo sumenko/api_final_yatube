@@ -1,14 +1,12 @@
 # TODO:  Напишите свой вариант
-from typing import List
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.contrib.auth import get_user_model
-from rest_framework.response import Response
-from rest_framework import status
 
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
+from rest_framework import filters
 
-from .models import Post, Group, Follow
+from .models import Post, Group
 from .serializers import GroupSerializer, PostSerializer, CommentSerializer, FollowSerializer
 from .permissions import IsOwnerOrReadOnly
 
@@ -55,23 +53,18 @@ class GroupViewSet(ModelViewSet):
 class FollowViewSet(ModelViewSet):
     serializer_class = FollowSerializer
     permission_classes = (IsAuthenticated,)
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['following',]
 
     def perform_create(self, serializer):
-    
-        # user_id = self.request.user
-        user_id = self.request.POST.get('user')
-        following_id = self.request.POST.get('following')
-        # print(user_id, following_id)
-        user = User.objects.filter(pk=user_id)
-        following = User.objects.filter(pk=following_id)
-        serializer.save(user=user, following=following)
-        # Follow.objects.create(user=user_id, following=following_id)
+        # user_id = self.request.POST.get('user')
+        following = self.request.POST.get('following')
+        # user = User.objects.get(pk=user_id)
+        username = self.request.user.username
+        # following = User.objects.get(username=following_name)
+        # print(username, following)
+        serializer.save(user=username, following=following)
         return super().perform_create(serializer)
     
     def get_queryset(self):
-        user = self.request.user
-        queryset = user.following.all()
-        # user_id = self.request.parser_context['kwargs'].get('post_id')
-        # following_id = self.request.parser_context['kwargs'].get('post_id')
-        return queryset
-        # return super().get_queryset()
+        return self.request.user.following.all()
