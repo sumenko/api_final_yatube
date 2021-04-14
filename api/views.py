@@ -1,16 +1,20 @@
-# TODO:  Напишите свой вариант
-from django.shortcuts import get_object_or_404, get_list_or_404
 from django.contrib.auth import get_user_model
-
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from django.shortcuts import get_list_or_404, get_object_or_404
+from rest_framework import filters, mixins, viewsets
+from rest_framework.permissions import (
+    IsAuthenticated, IsAuthenticatedOrReadOnly,
+)
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import filters
 
-from .models import Post, Group
-from .serializers import GroupSerializer, PostSerializer, CommentSerializer, FollowSerializer
+from .models import Group, Post
 from .permissions import IsOwnerOrReadOnly
+from .serializers import (
+    CommentSerializer, FollowSerializer, GroupSerializer, PostSerializer,
+)
 
 User = get_user_model()
+
 
 class PostViewSet(ModelViewSet):
     serializer_class = PostSerializer
@@ -50,21 +54,17 @@ class GroupViewSet(ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
 
-class FollowViewSet(ModelViewSet):
+class FollowViewSet(mixins.CreateModelMixin,
+                    mixins.ListModelMixin,
+                    viewsets.GenericViewSet):
+
     serializer_class = FollowSerializer
     permission_classes = (IsAuthenticated,)
     filter_backends = [filters.SearchFilter]
-    search_fields = ['following',]
+    search_fields = ['user__username', 'following__username']
 
     def perform_create(self, serializer):
-        # user_id = self.request.POST.get('user')
-        following = self.request.POST.get('following')
-        # user = User.objects.get(pk=user_id)
-        username = self.request.user.username
-        # following = User.objects.get(username=following_name)
-        # print(username, following)
-        serializer.save(user=username, following=following)
-        return super().perform_create(serializer)
-    
+        return serializer.save(user=self.request.user)
+
     def get_queryset(self):
-        return self.request.user.following.all()
+        return self.request.user.following

@@ -17,14 +17,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_filters',
-    # 'corsheaders',
+    'corsheaders',
     'api',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -100,7 +100,7 @@ REST_FRAMEWORK = {
     ]
 }
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'  # makemigrations
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'  # makemigrations req
 
-# CORS_ORIGIN_ALLOW_ALL = True
-# CURS_URLS_REGEX = r'^/api/.*$'
+CORS_ORIGIN_ALLOW_ALL = True
+CURS_URLS_REGEX = r'^/api/.*$'
