@@ -6,13 +6,9 @@ from .models import Comment, Follow, Group, Post
 
 User = get_user_model()
 
-User = get_user_model()
-
 
 class PostSerializer(serializers.ModelSerializer):
-    # можно так
-    # author = serializers.StringRelatedField()
-    author = serializers.ReadOnlyField(source='author.username')
+    author = serializers.StringRelatedField()
 
     class Meta:
         fields = ('id', 'text', 'author', 'pub_date')
@@ -20,7 +16,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.ReadOnlyField(source='author.username')
+    author = serializers.StringRelatedField()
 
     class Meta:
         fields = ('id', 'author', 'post', 'text', 'created')

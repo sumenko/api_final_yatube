@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_list_or_404, get_object_or_404
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import (
     IsAuthenticated, IsAuthenticatedOrReadOnly,
 )
 from rest_framework.viewsets import ModelViewSet
-from rest_framework import filters
 
 from .models import Group, Post
 from .permissions import IsOwnerOrReadOnly
@@ -17,19 +17,14 @@ User = get_user_model()
 
 
 class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
-
-    def get_queryset(self):
-        group_id = self.request.query_params.get('group')
-        if group_id:
-            return get_list_or_404(Post, group=group_id)
-        return Post.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('group', )
 
     def perform_create(self, serializer):
-        user = self.request.user
-        serializer.save(author=user)
-        return super().perform_create(serializer)
+        return serializer.save(author=self.request.user)
 
 
 class CommentViewSet(ModelViewSet):
@@ -48,7 +43,10 @@ class CommentViewSet(ModelViewSet):
         serializer.save(author=self.request.user, post=post)
 
 
-class GroupViewSet(ModelViewSet):
+# Пока не понял почему, но ModelViewSet тут тоже не позволяет другие методы
+class GroupViewSet(mixins.CreateModelMixin,
+                   mixins.ListModelMixin,
+                   viewsets.GenericViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -60,8 +58,8 @@ class FollowViewSet(mixins.CreateModelMixin,
 
     serializer_class = FollowSerializer
     permission_classes = (IsAuthenticated,)
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['user__username', 'following__username']
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('user__username', 'following__username')
 
     def perform_create(self, serializer):
         return serializer.save(user=self.request.user)
